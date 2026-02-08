@@ -6,7 +6,7 @@ const scene = new THREE.Scene();
 // Camera
 const camera = new THREE.PerspectiveCamera(
   45,
-  window.innerWidth / window.innerHeight,
+  window.innerWidth / window.innerHeight, //aspect ratio
   0.1,
   100
 );
@@ -35,10 +35,33 @@ scene.add(ambientLight);
 // Directional light (like studio light)
 const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 directionalLight.position.set(5, 5, 5);
-scene.add(directionalLight);
+directionalLight.castShadow = true;
 
+directionalLight.shadow.mapSize.width = 1024;
+directionalLight.shadow.mapSize.height = 1024;
+
+scene.add(directionalLight);
+const groundGeometry = new THREE.PlaneGeometry(20, 20);
+const groundMaterial = new THREE.ShadowMaterial({
+  opacity: 0.25,
+});
+
+const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -2.2;
+ground.receiveShadow = true;
+
+scene.add(ground);
+
+
+
+let clock = new THREE.Clock();
 function animate() {
   requestAnimationFrame(animate);
+
+  const time = clock.getElapsedTime();
+
+  phone.position.y = Math.sin(time) * 0.2;
 
   phone.rotation.y += 0.005;
 
@@ -78,4 +101,50 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+const screenGeometry = new THREE.PlaneGeometry(1.8 , 3.6);
+const TextureLoader = new THREE.TextureLoader();
+const screenTexture = TextureLoader.load('/screen.jpg');
+
+
+const screenMaterial = new THREE.MeshStandardMaterial({
+  map : screenTexture,
+  emissive : 0xffffff, 
+  emissiveIntensity : 0.4,
+})
+
+const phoneScreen = new THREE.Mesh(screenGeometry, screenMaterial);
+phoneScreen.position.z = 0.11;
+phone.add(phoneScreen);
+
+scene.remove(ambientLight);
+scene.remove(directionalLight);
+
+//softbase light
+const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+scene.add(ambient);
+
+//key light
+const keyLight = new THREE.DirectionalLight(0xffffff, 0.8);
+keyLight.position.set(5, 5, 5);
+scene.add(keyLight);
+
+//fill light
+const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
+fillLight.position.set(-5, 0, 5);
+scene.add(fillLight);
+
+//back light
+const rimLight = new THREE.DirectionalLight(0xffffff, 0.8);
+rimLight.position.set(0, 5, -5);
+scene.add(rimLight);
+
+phoneMaterial.roughness = 0.25;
+phoneMaterial.metalness = 0.8;
+
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+phone.castShadow = true;
+
 
